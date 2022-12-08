@@ -1,0 +1,12 @@
+{
+  "NetworkTables Settings": {
+    "mode": "Client",
+    "serverTeam": "4068"
+  },
+  "Shuffleboard": {
+    "Shoot": {
+      "open": true
+    },
+    "open": true
+  }
+}
