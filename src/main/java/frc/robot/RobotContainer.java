@@ -31,10 +31,13 @@ import frc.robot.Constants.ShooterConstants;
 import frc.robot.commands.LogCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
+import frc.robot.subsystems.PoseEstimatorSubsystem;
 import frc.robot.subsystems.LEDSubsystem.Color;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.photonvision.PhotonCamera;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -53,6 +56,8 @@ public class RobotContainer {
 
   private final DriveSubsystem robotDrive = new DriveSubsystem();
 
+  private final PoseEstimatorSubsystem poseEstimator;
+
   XboxController driverController = new XboxController(OIConstants.kDriverControllerPort);
   XboxController operatorController = new XboxController(OIConstants.kOperatorControllerPort);
 
@@ -67,6 +72,10 @@ public class RobotContainer {
   public RobotContainer() {
 
     instance = this;
+
+    PhotonCamera camera = new PhotonCamera("mmal_service_16.1");
+
+    poseEstimator = new PoseEstimatorSubsystem(camera, robotDrive);
 
     // Configure the button bindings
     configureButtonBindings();

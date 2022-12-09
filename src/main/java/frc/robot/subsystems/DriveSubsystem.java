@@ -354,6 +354,10 @@ public class DriveSubsystem extends SubsystemBase {
     return temp;
   }
 
+  public Rotation2d getRotation() {
+    return new Rotation2d(getHeading());
+  }
+  
   /**
    * Returns the turn rate of the robot.
    *
