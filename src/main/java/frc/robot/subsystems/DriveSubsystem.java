@@ -184,7 +184,7 @@ public class DriveSubsystem extends SubsystemBase {
     odometry.resetPosition(gyro.getRotation2d(),getModulePositions(),pose);
   }
 
-  private SwerveModulePosition [] getModulePositions() {
+  public SwerveModulePosition [] getModulePositions() {
     return new SwerveModulePosition [] {
       frontLeft.getPosition(),
       frontRight.getPosition(),
