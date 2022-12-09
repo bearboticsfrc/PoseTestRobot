@@ -32,6 +32,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private final SwerveDrivePoseEstimator<N7, N7, N5> poseEstimator;
     private final DriveSubsystem driveSubsystem;
 
+    private final Transform3d CAMERA_TO_ROBOT = new Transform3d(
+        new Pose3d( 0, 0, 0, new Rotation3d( 0, 0, 0)),
+        new Pose3d( 0, .02, 1.0, new Rotation3d( 0, 0, 0)));
+
     private final List<Pose3d> tagPoseList = Collections.unmodifiableList(List.of(
         new Pose3d(2.0, 2.0, 1.0, new Rotation3d(0, 0, Units.degreesToRadians(180.0))),
         new Pose3d(1.0, 3.0, 1.0, new Rotation3d(0, 0, Units.degreesToRadians(180.0)))
