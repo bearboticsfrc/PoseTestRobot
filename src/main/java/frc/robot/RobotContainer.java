@@ -15,24 +15,17 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
-import edu.wpi.first.wpilibj2.command.WaitUntilCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.ClimberConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.HopperConstants;
 import frc.robot.Constants.LEDconstants;
 import frc.robot.Constants.OIConstants;
-import frc.robot.Constants.ShooterConstants;
 import frc.robot.commands.LogCommand;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
-import frc.robot.subsystems.LEDSubsystem.Color;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -109,13 +102,13 @@ public class RobotContainer {
     configureAutonomousSelector(compTab);
     configureAutonomousChooser(compTab);
 
-    compTab.add("Auto Override", chooser).withPosition(1, 1);
-    compTab
-        .addString("Auto to run", () -> this.getAutonomousCommand().getName())
-        .withPosition(0, 1);
-    compTab
-        .addString("Switch Auto", () -> autonomousSelector.getSelected().getName())
-        .withPosition(2, 1);
+  //  compTab.add("Auto Override", chooser).withPosition(1, 1);
+  //  compTab
+  //      .addString("Auto to run", () -> this.getAutonomousCommand().getName())
+  //      .withPosition(0, 1);
+  //  compTab
+  //      .addString("Switch Auto", () -> autonomousSelector.getSelected().getName())
+  //      .withPosition(2, 1);
   }
 
   public DriveSubsystem getDriveSubsystem() {

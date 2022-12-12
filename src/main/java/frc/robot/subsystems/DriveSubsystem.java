@@ -19,9 +19,6 @@ import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.subsystems.swerve.DriveController;
-import frc.robot.subsystems.swerve.SteerController;
-import frc.robot.subsystems.swerve.SwerveModule;
 import frc.robot.util.RateLimiter;
 import java.util.Map;
 
@@ -35,7 +32,7 @@ public class DriveSubsystem extends SubsystemBase {
 
   // The gyro sensor
   private final WPI_Pigeon2 gyro;
-  private double gyroOffetDegrees = 0.0;
+  private double gyroOffsetDegrees = 0.0;
 
   private double kMaxSpeed = 3.5; // DriveConstants.kMaxSpeedMetersPerSecond;
 
@@ -89,41 +86,37 @@ public class DriveSubsystem extends SubsystemBase {
         new SwerveModule(
             "FL",
             driveSystemTab,
-            new DriveController(DriveConstants.kFrontLeftDriveMotorPort),
-            new SteerController(
-                DriveConstants.kFrontLeftTurningMotorPort,
-                DriveConstants.kFrontLeftTurningInputPort,
-                DriveConstants.kFrontLeftEncoderAngle));
-
+            DriveConstants.kFrontLeftDriveMotorPort,
+            DriveConstants.kFrontLeftTurningMotorPort,
+            DriveConstants.kFrontLeftTurningInputPort,
+            DriveConstants.kFrontLeftEncoderAngle);
+            
     backLeft =
         new SwerveModule(
             "BL",
             driveSystemTab,
-            new DriveController(DriveConstants.kBackLeftDriveMotorPort),
-            new SteerController(
-                DriveConstants.kBackLeftTurningMotorPort,
-                DriveConstants.kBackLeftTurningInputPort,
-                DriveConstants.kBackLeftEncoderAngle));
+            DriveConstants.kBackLeftDriveMotorPort,
+            DriveConstants.kBackLeftTurningMotorPort,
+            DriveConstants.kBackLeftTurningInputPort,
+            DriveConstants.kBackLeftEncoderAngle);
 
     frontRight =
         new SwerveModule(
             "FR",
             driveSystemTab,
-            new DriveController(DriveConstants.kFrontRightDriveMotorPort),
-            new SteerController(
-                DriveConstants.kFrontRightTurningMotorPort,
-                DriveConstants.kFrontRightTurningInputPort,
-                DriveConstants.kFrontRightEncoderAngle));
+            DriveConstants.kFrontRightDriveMotorPort,
+            DriveConstants.kFrontRightTurningMotorPort,
+            DriveConstants.kFrontRightTurningInputPort,
+            DriveConstants.kFrontRightEncoderAngle);
 
     backRight =
         new SwerveModule(
             "BR",
             driveSystemTab,
-            new DriveController(DriveConstants.kBackRightDriveMotorPort),
-            new SteerController(
-                DriveConstants.kBackRightTurningMotorPort,
-                DriveConstants.kBackRightTurningInputPort,
-                DriveConstants.kBackRightEncoderAngle));
+            DriveConstants.kBackRightDriveMotorPort,
+            DriveConstants.kBackRightTurningMotorPort,
+            DriveConstants.kBackRightTurningInputPort,
+            DriveConstants.kBackRightEncoderAngle);
 
     odometry = new SwerveDriveOdometry(DriveConstants.kDriveKinematics, gyro.getRotation2d(), getModulePositions());
 
@@ -157,7 +150,7 @@ public class DriveSubsystem extends SubsystemBase {
   public void periodic() {
     // Update the odometry in the periodic block
     odometry.update(
-        gyro.getRotation2d().plus(Rotation2d.fromDegrees(gyroOffetDegrees)),
+        gyro.getRotation2d(),
         getModulePositions());
     speed = maxSpeedEntry.getDouble(kMaxSpeed);
   }
@@ -243,7 +236,7 @@ public class DriveSubsystem extends SubsystemBase {
                     xSpeed,
                     ySpeed,
                     rot,
-                    gyro.getRotation2d().plus(Rotation2d.fromDegrees(gyroOffetDegrees)))
+                    gyro.getRotation2d())
                 : new ChassisSpeeds(xSpeed, ySpeed, rot));
 
     setModuleStates(swerveModuleStates);
@@ -334,14 +327,15 @@ public class DriveSubsystem extends SubsystemBase {
 
   /** Zeroes the heading of the robot. */
   public void zeroHeading() {
-    gyroOffetDegrees = 0.0;
+    headingOffset(0);
     gyro.reset();
+    gyro.addYaw(0);
   }
 
-  public void headingOffest(double offsetDegrees) {
+  private void headingOffset(double offsetDegrees) {
     System.out.println("!!!!!!!!!!! Adding " + offsetDegrees);
-    gyroOffetDegrees = offsetDegrees;
-    // gyro.addFusedHeading(offsetDegrees);
+    gyroOffsetDegrees = offsetDegrees;
+    gyro.addYaw(gyroOffsetDegrees);
   }
   /**
    * Returns the heading of the robot.
@@ -355,9 +349,9 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   public Rotation2d getRotation() {
-    return new Rotation2d(getHeading());
+    return gyro.getRotation2d();
   }
-  
+
   /**
    * Returns the turn rate of the robot.
    *
