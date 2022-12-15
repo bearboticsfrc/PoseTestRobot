@@ -57,16 +57,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     ));
 
     private final Map<Integer, Pose3d> tagMap = Map.ofEntries(
-        new AbstractMap.SimpleEntry<Integer, Pose3d>(0, new Pose3d(4.11, 0.0, 0.5, new Rotation3d(0, 0, Units.degreesToRadians(0.0)))),
-        new AbstractMap.SimpleEntry<Integer, Pose3d>(1, new Pose3d(8.22, 4.11, 0.5, new Rotation3d(0, 0, Units.degreesToRadians(270.0)))),
-        new AbstractMap.SimpleEntry<Integer, Pose3d>(2, new Pose3d(0, 4.11, 0.5, new Rotation3d(0, 0, Units.degreesToRadians(90.0)))),
+        new AbstractMap.SimpleEntry<Integer, Pose3d>(0, new Pose3d(0, 4.11, 0.768, new Rotation3d(0, 0, Units.degreesToRadians(0.0)))),
+        new AbstractMap.SimpleEntry<Integer, Pose3d>(2, new Pose3d(4.11, 0.0, 0.768, new Rotation3d(0, 0, Units.degreesToRadians(90.0)))),
+        new AbstractMap.SimpleEntry<Integer, Pose3d>(3, new Pose3d(4.11, 8.22, 0.768, new Rotation3d(0, 0, Units.degreesToRadians(270.0)))),
         new AbstractMap.SimpleEntry<Integer, Pose3d>(10, new Pose3d(4.11, 4.11, 1.5, new Rotation3d(0, 0, Units.degreesToRadians(90.0)))),
         new AbstractMap.SimpleEntry<Integer, Pose3d>(11, new Pose3d(4.11, 4.11, 1.5, new Rotation3d(0, 0, Units.degreesToRadians(0.0)))),
         new AbstractMap.SimpleEntry<Integer, Pose3d>(12, new Pose3d(4.11, 4.11, 1.5, new Rotation3d(0, 0, Units.degreesToRadians(270.0)))),
         new AbstractMap.SimpleEntry<Integer, Pose3d>(13, new Pose3d(4.11, 4.11, 1.5, new Rotation3d(0, 0, Units.degreesToRadians(180.0))))
     );
     private static final Matrix<N3,N1> stateStdDevs = VecBuilder.fill(0.05, 0.05, Units.degreesToRadians(5));
-    private static final Vector<N5> localMeasurementStdDevs = VecBuilder.fill(Units.degreesToRadians(0.01), 0.01, 0.01, 0.01, 0.01);
     private static final Matrix<N3,N1> visionMeasurementStdDevs = VecBuilder.fill(0.5, 0.5, Units.degreesToRadians(10));
 
     private final Field2d field2d = new Field2d();
@@ -86,14 +85,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         
         poseEstimator = new SwerveDrivePoseEstimator(
                                 Constants.DriveConstants.kDriveKinematics,
-                                Rotation2d.fromDegrees(driveSubsystem.getHeading()),
+                                driveSubsystem.getRotation(),
+                               // Rotation2d.fromDegrees(driveSubsystem.getHeading()),
                                 driveSubsystem.getModulePositions(),
                                 new Pose2d(),
                                 stateStdDevs,
                                 visionMeasurementStdDevs);
 
         tab.addString("Pose", this::getPoseString).withPosition(0, 0).withSize(2, 0);
-        tab.addDouble("AngleTo0", this::getAngleToTarget0).withPosition(0, 2).withSize(2, 0);
+ //       tab.addDouble("AngleTo0", this::getAngleToTarget0).withPosition(0, 2).withSize(2, 0);
+        tab.addBoolean("has targets", this::hasTargets).withPosition(0,2).withSize(2,1);
+        tab.addInteger("best target Id", this::bestFiducialId).withPosition(0,3).withSize(2,1);
         tab.add("Field", field2d).withPosition(2, 0).withSize(6, 4)
                   .withWidget(BuiltInWidgets.kField);
                             
@@ -113,25 +115,37 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         transformYLogEntry.append(target.getBestCameraToTarget().getY());
     }
 
+    private boolean hasTargets;
+    public boolean hasTargets() {
+        return hasTargets;
+    }
+
+    private int bestFiducialId;
+    public int bestFiducialId() {
+        return bestFiducialId;
+    }
     @Override
     public void periodic() {
         PhotonPipelineResult pipelineResult = photonCamera.getLatestResult();
         double resultTimestamp = pipelineResult.getTimestampSeconds();
+        bestFiducialId = -1;
 
+        hasTargets = pipelineResult.hasTargets();
         hasTargetsLog.append(pipelineResult.hasTargets());
         if (pipelineResult.hasTargets()) {
+            PhotonTrackedTarget bestTarget = pipelineResult.getBestTarget();
+            bestFiducialId = bestTarget.getFiducialId();
             List<PhotonTrackedTarget> targets = pipelineResult.getTargets();
             for (PhotonTrackedTarget target: targets) {
                 logTarget(target);
                 if (target.getPoseAmbiguity() != -1 && target.getPoseAmbiguity() < 0.2) {
                     int fiducialId = target.getFiducialId();
-                    fiducialId = 0;
-
                     Pose3d targetPose = tagMap.get(fiducialId);
                     if ( targetPose != null ) {
                         Transform3d camToTarget = target.getBestCameraToTarget();
                         Pose3d camPose = targetPose.transformBy(camToTarget.inverse());
-                        Pose3d visionMeasurement = camPose.transformBy(CAMERA_TO_ROBOT);
+                        //Pose3d visionMeasurement = camPose.transformBy(CAMERA_TO_ROBOT);
+                        Pose3d visionMeasurement = camPose;
                         poseEstimator.addVisionMeasurement(visionMeasurement.toPose2d(), resultTimestamp);
                         tagLog.append("Added vision measurement ["+visionMeasurement.getX() + ","+visionMeasurement.getY()+","+visionMeasurement.getRotation().toRotation2d().getDegrees()+"]");
                     }
@@ -146,7 +160,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         field2d.setRobotPose(getPose());
 
         Pose3d target0 = tagMap.get(0);
-        Rotation2d targetAngle = getAngleToPose(target0);
+       // Rotation2d targetAngle = getAngleToPose(target0);
        
 
         // get all the angles ....
@@ -155,17 +169,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //}
     }
 
-    public double getAngleToTarget0() {
-        Pose3d target0 = tagMap.get(0);
-        Rotation2d targetAngle = getAngleToPose(target0);
-        return targetAngle.getDegrees();
-    }
+ //   public double getAngleToTarget0() {
+ //       Pose3d target0 = tagMap.get(0);
+ //       Rotation2d targetAngle = getAngleToPose(target0);
+ //       return targetAngle.getDegrees();
+ //   }
 
-    public Rotation2d getAngleToPose(Pose3d targetPose) {
-        Pose3d myPose = new Pose3d(getPose());
-        Transform3d transform = new Transform3d(myPose, targetPose);
-        return transform.getRotation().toRotation2d();
-    }
+//    public Rotation2d getAngleToPose(Pose3d targetPose) {
+//        Pose3d myPose = new Pose3d(getPose());
+//        Transform3d transform = new Transform3d(myPose, targetPose);
+//        return transform.getRotation().toRotation2d();
+//    }
 
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();

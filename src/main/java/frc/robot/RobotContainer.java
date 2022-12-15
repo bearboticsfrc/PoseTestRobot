@@ -49,7 +49,7 @@ public class RobotContainer {
 
   private final DriveSubsystem robotDrive = new DriveSubsystem();
 
-  private final PoseEstimatorSubsystem poseEstimator;
+  private PoseEstimatorSubsystem poseEstimator;
 
   XboxController driverController = new XboxController(OIConstants.kDriverControllerPort);
   XboxController operatorController = new XboxController(OIConstants.kOperatorControllerPort);
@@ -66,9 +66,13 @@ public class RobotContainer {
 
     instance = this;
 
-    PhotonCamera camera = new PhotonCamera("mmal_service_16.1");
+    try {
+      PhotonCamera camera = new PhotonCamera("mmal_service_16.1");
 
-    poseEstimator = new PoseEstimatorSubsystem(camera, robotDrive);
+      poseEstimator = new PoseEstimatorSubsystem(camera, robotDrive);
+    } catch (NullPointerException ex) {
+      DataLogManager.log("Could not initialize PhotonCamera.");
+    }
 
     // Configure the button bindings
     configureButtonBindings();

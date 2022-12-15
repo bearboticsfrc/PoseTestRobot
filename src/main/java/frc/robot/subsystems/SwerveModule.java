@@ -37,6 +37,7 @@ public class SwerveModule {
       int steerEncoderCanId,
       double steerAngleOffset) {
     setupDriveMotor(driveMotorCanId);
+    setupCANCoder(steerEncoderCanId, steerAngleOffset);
     setupSteerMotor(steerMotorCanId);
 
     dashboardContainer.addNumber(
@@ -60,13 +61,16 @@ public class SwerveModule {
         driveMotor.setSmartCurrentLimit(DriveConstants.kDriveCurrentLimit),
         "Failed to set current limit for NEO");
     RevUtil.checkRevError(
-        driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 100),
+        driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus0, 20),
         "Failed to set periodic status frame 0 rate");
     RevUtil.checkRevError(
         driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus1, 20),
         "Failed to set periodic status frame 1 rate");
     RevUtil.checkRevError(
         driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus2, 20),
+        "Failed to set periodic status frame 2 rate");
+    RevUtil.checkRevError(
+        driveMotor.setPeriodicFramePeriod(CANSparkMaxLowLevel.PeriodicFrame.kStatus3, 500),
         "Failed to set periodic status frame 2 rate");
     // Set neutral mode to brake
     driveMotor.setIdleMode(CANSparkMax.IdleMode.kBrake);
@@ -103,17 +107,17 @@ public class SwerveModule {
         steerMotor.setSmartCurrentLimit(DriveConstants.kSteerCurrentLimit),
         "Failed to set NEO current limits");
 
-    RelativeEncoder integratedEncoder = steerMotor.getEncoder();
+    steerBuiltinEncoder = steerMotor.getEncoder();
     RevUtil.checkRevError(
-        integratedEncoder.setPositionConversionFactor(
+        steerBuiltinEncoder.setPositionConversionFactor(
             2.0 * Math.PI * DriveConstants.kSteerDriveReduction),
         "Failed to set NEO encoder conversion factor");
     RevUtil.checkRevError(
-        integratedEncoder.setVelocityConversionFactor(
+        steerBuiltinEncoder.setVelocityConversionFactor(
             2.0 * Math.PI * DriveConstants.kSteerDriveReduction / 60.0),
         "Failed to set NEO encoder conversion factor");
     RevUtil.checkRevError(
-        integratedEncoder.setPosition(getAbsoluteAngle()), "Failed to set NEO encoder position");
+        steerBuiltinEncoder.setPosition(getAbsoluteAngle()), "Failed to set NEO encoder position");
 
     steerMotorController = steerMotor.getPIDController();
     RevUtil.checkRevError(steerMotorController.setP(pidProportional), "Failed to set NEO PID proportional constant");
@@ -121,7 +125,7 @@ public class SwerveModule {
     RevUtil.checkRevError(steerMotorController.setD(pidDerivative), "Failed to set NEO PID derivative constant");
 
     RevUtil.checkRevError(
-        steerMotorController.setFeedbackDevice(integratedEncoder), "Failed to set NEO PID feedback device");
+        steerMotorController.setFeedbackDevice(steerBuiltinEncoder), "Failed to set NEO PID feedback device");
   }
 
   public void setupCANCoder(int id, double offsetDegrees) {
